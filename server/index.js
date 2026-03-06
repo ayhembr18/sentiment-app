@@ -47,7 +47,7 @@ app.post('/api/reviews', async (req, res) => {
 
     // Analyse NLP maison
     const result = nlpModel.predict(text.trim());
-    console.log(`📊 NLP: "${text.slice(0, 40)}..." → ${result.label} (score: ${result.score})`);
+    console.log(` NLP: "${text.slice(0, 40)}..." → ${result.label} (score: ${result.score})`);
 
     const review = new Review({
       text:       text.trim(),

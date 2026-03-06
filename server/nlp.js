@@ -1,9 +1,3 @@
-// ══════════════════════════════════════════════════════════════
-//  NLP ENGINE v2 — Ensemble amélioré (cible: 90%+ accuracy)
-//  Améliorations: dataset 300+, lexique sentiment, TF-IDF 500,
-//  SVM optimisé, Logistic Regression, vote pondéré adaptatif
-// ══════════════════════════════════════════════════════════════
-
 // ── STOPWORDS ─────────────────────────────────────────────────
 const STOPWORDS_FR = new Set([
   "le","la","les","un","une","des","du","de","et","en","au","aux","à","ce","se","sa","son","ses",
@@ -25,7 +19,7 @@ const NEGATIONS = new Set([
   "wont","isnt","arent","wasnt","werent","havent","hasnt","hadnt","wouldnt","couldnt","shouldnt",
 ]);
 
-// ── LEXIQUE DE SENTIMENT (forte pondération) ──────────────────
+// ── LEXIQUE DE SENTIMENT  ──────────────────
 const SENTIMENT_LEXICON = {
   // Très positifs FR
   "excellent": 3, "fantastique": 3, "parfait": 3, "exceptionnel": 3, "magnifique": 3,
@@ -119,19 +113,19 @@ function detectNegation(text) {
   return { hasNeg: negPos.size > 0, negatedWords: new Set([...negPos].map(i => words[i])) };
 }
 
-// ── LEXIQUE SCORER (3ème votant) ───────────────────────────────
+// ── LEXIQUE SCORER  ───────────────────────────────
 function lexiconScore(text) {
   const words = normalize(text).split(" ");
   let score = 0, count = 0;
   let intensifier = 1.0;
 
   words.forEach((w, i) => {
-    // Vérifier intensificateur
+    
     if (INTENSIFIERS[w]) { intensifier = INTENSIFIERS[w]; return; }
 
     const val = SENTIMENT_LEXICON[w] || SENTIMENT_LEXICON[stem(w)];
     if (val !== undefined) {
-      // Vérifier négation dans fenêtre [-3, 0]
+      
       let negated = false;
       for (let j = Math.max(0, i-3); j < i; j++) {
         if (NEGATIONS.has(words[j])) { negated = true; break; }
@@ -143,10 +137,10 @@ function lexiconScore(text) {
     }
   });
 
-  const normalized = count > 0 ? score / (count * 3) : 0; // normaliser entre -1 et 1
+  const normalized = count > 0 ? score / (count * 3) : 0; 
   const clamped = Math.max(-1, Math.min(1, normalized));
 
-  // Convertir en probabilités soft
+  
   const pos = Math.max(0, clamped);
   const neg = Math.max(0, -clamped);
   const neu = 1 - pos - neg;
@@ -170,10 +164,10 @@ class TFIDF {
     corpus.forEach(doc => { new Set(doc).forEach(t => { df[t] = (df[t] || 0) + 1; }); });
     const N = corpus.length;
     Object.keys(df).forEach(t => { this.idf[t] = Math.log((N + 1) / (df[t] + 1)) + 1; });
-    // Garder seulement les features avec meilleur IDF (ni trop rares, ni trop communes)
+    
     const scored = Object.entries(df)
-      .filter(([, f]) => f >= 2 && f <= N * 0.9) // ignorer hapax et mots universels
-      .map(([t, f]) => [t, this.idf[t] * Math.sqrt(f)]) // score = idf * sqrt(tf)
+      .filter(([, f]) => f >= 2 && f <= N * 0.9) 
+      .map(([t, f]) => [t, this.idf[t] * Math.sqrt(f)]) 
       .sort((a, b) => b[1] - a[1])
       .slice(0, this.maxFeatures);
     scored.forEach(([t], i) => { this.vocab[t] = i; });
@@ -237,7 +231,7 @@ class NaiveBayes {
   }
 }
 
-// ── LOGISTIC REGRESSION (SGD) ──────────────────────────────────
+// ── LOGISTIC REGRESSION  ──────────────────────────────────
 class LogisticRegression {
   constructor(lr = 0.1, epochs = 200, lambda = 0.001) {
     this.lr = lr; this.epochs = epochs; this.lambda = lambda;
