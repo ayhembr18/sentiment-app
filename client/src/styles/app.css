@@ -1,0 +1,383 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+}
+
+input, textarea, button, select {
+  font-family: inherit;
+  outline: none;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+/* ── Animations ───────────────────────────────────────────── */
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes pulse   { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Utility ──────────────────────────────────────────────── */
+.fade-up  { animation: fadeUp 0.4s ease; }
+.fade-in  { animation: fadeIn 0.3s ease; }
+
+/* ── Layout ───────────────────────────────────────────────── */
+.app-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+  width: 100%;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.header {
+  background: linear-gradient(135deg, #0d0d1a 0%, #12121f 100%);
+  border-bottom: 1px solid #1a1a2e;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, #00e5a0, #0070f3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.logo-title {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.logo-title span { color: #00e5a0; }
+
+.logo-sub {
+  font-size: 10px;
+  color: #555;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+.tabs {
+  background: #0d0d1a;
+  border-bottom: 1px solid #1a1a2e;
+  padding: 0 24px;
+  display: flex;
+  gap: 4px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.tab-btn.active  { color: #00e5a0; border-bottom: 2px solid #00e5a0; }
+.tab-btn.inactive { color: #555; border-bottom: 2px solid transparent; }
+
+/* ── Cards ────────────────────────────────────────────────── */
+.card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid #1a1a2e;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.kpi-card {
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 16px;
+  border-top: 3px solid;
+}
+
+.kpi-value {
+  font-family: 'Space Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.kpi-label {
+  font-size: 11px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── Review Card ──────────────────────────────────────────── */
+.review-card {
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 14px 16px;
+  position: relative;
+  transition: all 0.4s ease;
+}
+
+.review-badge {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: #00e5a022;
+  color: #00e5a0;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.emotion-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* ── Forms ────────────────────────────────────────────────── */
+.form-input {
+  width: 100%;
+  background: #0d0d1a;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #e0e0e0;
+  font-size: 14px;
+  transition: border 0.2s;
+}
+
+.form-input:focus { border-color: #00e5a060; box-shadow: 0 0 0 3px #00e5a015; }
+
+.form-label {
+  font-size: 12px;
+  color: #888;
+  display: block;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #00e5a0, #0070f3);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s;
+  width: 100%;
+}
+
+.btn-primary:disabled {
+  background: #1a1a2e;
+  color: #444;
+  cursor: not-allowed;
+}
+
+.btn-logout {
+  background: #ff4d6d18;
+  border: 1px solid #ff4d6d33;
+  color: #ff4d6d;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ── Badges ───────────────────────────────────────────────── */
+.badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.badge-success { background: #00e5a022; border: 1px solid #00e5a044; color: #00e5a0; }
+.badge-error   { background: #ff4d6d22; border: 1px solid #ff4d6d44; color: #ff4d6d; }
+.badge-info    { background: #0070f322; border: 1px solid #0070f344; color: #0070f3; }
+
+/* ── Alert ────────────────────────────────────────────────── */
+.alert-error {
+  background: #ff4d6d18;
+  border: 1px solid #ff4d6d33;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #ff4d6d;
+  font-size: 12px;
+}
+
+/* ── Spinner ──────────────────────────────────────────────── */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-sm {
+  width: 10px; height: 10px;
+  border: 2px solid #555;
+  border-top-color: #00e5a0;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Filter Buttons ───────────────────────────────────────── */
+.filter-btn {
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: 1px solid;
+}
+
+/* ── CSV Drop Zone ────────────────────────────────────────── */
+.drop-zone {
+  border-radius: 16px;
+  padding: 48px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+/* ── Auth Page ────────────────────────────────────────────── */
+.auth-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeUp 0.5s ease;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 24px;
+}
+
+.auth-toggle {
+  display: flex;
+  background: #0d0d1a;
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 24px;
+}
+
+.auth-toggle-btn {
+  flex: 1;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 0;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* ── Satisfaction Bar ─────────────────────────────────────── */
+.sat-bar-track {
+  background: #1a1a2e;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.sat-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 1s ease;
+}
+
+/* ── Section Title ────────────────────────────────────────── */
+.section-title {
+  font-size: 12px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid #111;
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: #333;
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── Grids ────────────────────────────────────────────────── */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ── Score Bar ────────────────────────────────────────────── */
+.score-bar-track {
+  height: 5px;
+  background: #1a1a2e;
+  border-radius: 999px;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-bar-mid {
+  position: absolute;
+  left: 50%; top: 0;
+  width: 1px; height: 100%;
+  background: #333;
+}
+
+.score-bar-fill {
+  position: absolute;
+  top: 0; height: 100%;
+  border-radius: 999px;
+  transition: all 0.8s ease;
+}
