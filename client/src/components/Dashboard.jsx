@@ -140,10 +140,10 @@ export default function Dashboard({ user, onLogout }) {
             {/* KPIs */}
             <div className="grid-4" style={{ marginBottom: 20 }}>
               {[
-                { label: "Total Avis",    color: "#0070f3", icon: "📝", anim: reviews.length },
-                { label: "Satisfaction",  color: "#00e5a0", icon: "✅", anim: satisfaction, pct: true },
-                { label: "Score Moyen",   color: avgScore >= 0 ? "#00e5a0" : "#ff4d6d", icon: "📈", val: (avgScore >= 0 ? "+" : "") + avgScore.toFixed(2) },
-                { label: "À surveiller", color: "#ff4d6d", icon: "⚠️", anim: neg },
+                { label: "Total Avis",    color: "#0070f3", anim: reviews.length },
+                { label: "Satisfaction",  color: "#00e5a0", anim: satisfaction, pct: true },
+                { label: "Score Moyen",   color: avgScore >= 0 ? "#00e5a0" : "#ff4d6d", val: (avgScore >= 0 ? "+" : "") + avgScore.toFixed(2) },
+                { label: "À surveiller", color: "#ff4d6d", anim: neg },
               ].map((k, i) => (
                 <div key={i} className="kpi-card" style={{ borderColor: k.color, borderTopColor: k.color }}>
                   <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>

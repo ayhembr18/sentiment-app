@@ -1,3 +1,13 @@
+// ══════════════════════════════════════════════════════════════
+//  SentiMind NLP — Modèle from scratch
+//  Dataset : 1000+ exemples · Lexique enrichi · FR + EN
+// ══════════════════════════════════════════════════════════════
+
+// ── STOPWORDS ─────────────────────────────────────────────────
+// On garde les mots de liaison importants pour le sentiment :
+// "mais", "pourtant", "cependant", "toutefois", "but", "however",
+// "although", "though", "yet", "despite", "malgré", "quand même"
+// Ces mots introduisent souvent un retournement de sentiment !
 
 const STOPWORDS_FR = new Set([
   "le","la","les","un","une","des","du","de","et","en","au","aux","à","ce","se","sa","son","ses",
@@ -5,7 +15,8 @@ const STOPWORDS_FR = new Set([
   "quoi","dans","sur","sous","par","pour","avec","ne",
   "tout","tous","cette","cet","ces","ça","c","j","l","d","s","m",
   "n","y","là","où","dont","lorsque","quand","comment","pourquoi","est","sont","était","être",
-  
+  // EXCLUS VOLONTAIREMENT (importants pour le sentiment) :
+  // "mais","ou","si","plus","bien","aussi","même","ni","car","sans"
 ]);
 
 const STOPWORDS_EN = new Set([
@@ -14,7 +25,8 @@ const STOPWORDS_EN = new Set([
   "it","its","this","that","i","you","he","she","we","they","me","him","her","us","them","my",
   "your","his","our","their","what","which","who","when","where","why","how",
   "am","im","ive","as","if","then","there","here","up","out","about","than","too",
-
+  // EXCLUS VOLONTAIREMENT (importants pour le sentiment) :
+  // "but","yet","however","although","though","despite","or","so","just","also","even","still"
 ]);
 
 const NEGATIONS = new Set([
@@ -30,7 +42,7 @@ const CONTRAST_WORDS = new Set([
   "but","however","although","though","yet","despite","nevertheless","nonetheless","still","even",
 ]);
 
-// ── LEXIQUE DE SENTIMENT  ──────────────────────────────
+// ── LEXIQUE DE SENTIMENT ENRICHI ──────────────────────────────
 const SENTIMENT_LEXICON = {
   // ══ TRÈS POSITIFS FR ══
   "excellent": 3, "fantastique": 3, "parfait": 3, "exceptionnel": 3, "magnifique": 3,
@@ -82,7 +94,7 @@ const SENTIMENT_LEXICON = {
   "impeccable": 3, "exquisite": 3, "faultless": 3, "sublime": 3,
 
   // ══ POSITIFS EN ══
-  "satisfied": 2, "happy": 2, "pleased": 2, "delighted": 2, "recommend": 2,
+  "satisfied": 2, "happy": 2, "pleased": 2, "delighted": 3, "recommend": 2,
   "great": 2, "good": 1, "nice": 1, "fast": 1, "quick": 1, "efficient": 1,
   "reliable": 2, "durable": 1, "quality": 1, "love": 2, "awesome": 2, "best": 2,
   "solid": 1, "sturdy": 1, "robust": 1, "useful": 1, "practical": 1,
@@ -90,6 +102,9 @@ const SENTIMENT_LEXICON = {
   "affordable": 1, "reasonable": 1, "economical": 1, "fair": 1,
   "prompt": 1, "punctual": 1, "smooth": 1, "clean": 1, "clear": 1,
   "refunded": 2, "replacement": 1, "resolved": 2, "fixed": 1,
+  "flawlessly": 3, "immaculate": 3, "premium": 2, "early": 1, "delight": 3, "blown away": 3, "blown": 3, "exceeded": 2, "exceed": 2,
+  "delight": 2, "delightful": 2, "thrilled": 3, "ecstatic": 3,
+  "overwhelmed": 1, "speechless": 2, "gem": 2, "treasure": 2,
 
   // ══ MOTS LIÉS AU PRIX / RETOUR POSITIFS EN ══
   "worth": 1, "value": 1, "bargain": 2, "deal": 1, "discount": 1, "sale": 0,
@@ -105,10 +120,18 @@ const SENTIMENT_LEXICON = {
   "disappointed": -2, "disappointing": -2, "bad": -2, "defective": -2, "broken": -2,
   "slow": -1, "mediocre": -2, "cheap": -1, "flimsy": -2,
   "unusable": -3, "unhappy": -2, "unsatisfied": -2, "regret": -2, "waste": -2,
-  "poor": -2, "worst": -3, "avoid": -2, "complaint": -2,
+  "poor": -2, "worst": -3, "avoid": -2, "complaint": -1,
   "damaged": -2, "cracked": -2, "torn": -2, "bent": -2, "scratched": -1,
   "missing": -2, "incomplete": -1, "incorrect": -1, "wrong": -1,
   "complicated": -1, "difficult": -1, "confusing": -1, "misleading": -2,
+  "failed": -2, "failure": -2, "defects": -2, "broke": -2, "crack": -2,
+  "mechanism": 0, "longevity": 0,
+
+  // Mots contextuels neutralisés (apparaissent dans avis positifs : "I was skeptical but...")
+  "skeptical": 0, "skeptic": 0, "nervous": 0, "nervou": 0, "concerns": 0, "concerned": 0,
+  "expecting": 0, "expected": 0, "initial": 0, "initially": 0,
+  "deliberation": 0, "hesitation": 0, "worry": 0, "worried": 0,
+  "doubt": 0, "doubts": 0, "unsure": 0, "uncertain": 0,
 
   // ══ MOTS LIÉS AU PRIX / RETOUR NÉGATIFS EN ══
   "overpriced": -2, "expensive": -2, "costly": -2, "pricey": -1, "outrageous price": -3,
@@ -179,13 +202,13 @@ function detectNegation(text) {
   const negPos = new Set();
   words.forEach((w, i) => {
     if (NEGATIONS.has(w)) {
-      for (let j = i+1; j <= Math.min(i+4, words.length-1); j++) negPos.add(j);
+      for (let j = i+1; j <= Math.min(i+3, words.length-1); j++) negPos.add(j);
     }
   });
   return { hasNeg: negPos.size > 0, negatedWords: new Set([...negPos].map(i => words[i])) };
 }
 
-// Détecte les mots de contraste
+// Détecte les mots de contraste (mais, however...) et leur position
 function detectContrast(text) {
   const words = normalize(text).split(" ");
   const positions = [];
@@ -216,7 +239,7 @@ function lexiconScore(text) {
       let contrastWeight = 1.0;
       if (contrastInfo.hasContrast) {
         const afterContrast = contrastInfo.positions.some(p => i > p);
-        contrastWeight = afterContrast ? 1.5 : 0.7;
+        contrastWeight = afterContrast ? 1.8 : 0.65;
       }
 
       const contribution = val * intensifier * (negated ? -0.8 : 1.0) * contrastWeight;
@@ -226,7 +249,7 @@ function lexiconScore(text) {
     }
   });
 
-  const normalized = count > 0 ? score / (count * 3) : 0;
+  const normalized = count > 0 ? score / (Math.sqrt(count) * 3) : 0;
   const clamped    = Math.max(-1, Math.min(1, normalized));
 
   const pos = Math.max(0, clamped);
@@ -962,6 +985,22 @@ const TRAINING_DATA = [
   {text:"Neither excellent nor bad just average",label:0},
   {text:"Basic product doing its job",label:0},
 
+
+  // ══════════ CAS HESITATION → POSITIF (exemples ciblés) ══════════
+  {text:"Was skeptical at first but product is absolutely phenomenal highly recommend",label:1},
+  {text:"Initially nervous about ordering but product exceeded every expectation",label:1},
+  {text:"Had concerns before buying but completely blown away by the quality",label:1},
+  {text:"Despite initial worries product is outstanding and delivery was perfect",label:1},
+  {text:"Was worried it would not arrive on time but it came early and is perfect",label:1},
+  {text:"Ordered as gift nervous about quality but recipient absolutely delighted",label:1},
+  {text:"Low price made me skeptical but quality is surprisingly excellent",label:1},
+  {text:"Doubted the quality at first but product is genuinely remarkable",label:1},
+  {text:"Expected little but this product completely blew me away fantastic",label:1},
+  {text:"Not sure at first but after using it I am extremely satisfied",label:1},
+  {text:"J avais des doutes mais le produit est vraiment exceptionnel je recommande",label:1},
+  {text:"Hesitant au debut mais j ai ete completement bluffe par la qualite",label:1},
+  {text:"Prix bas m inquietait mais qualite vraiment surprenante tres satisfait",label:1},
+  {text:"Pas convaincu au depart mais tres agreablement surpris au final",label:1},
   // ══════════ CAS COMPLEXES & EDGE CASES (40) ══════════
   {text:"Pas du tout satisfait vraiment décevant",label:-1},
   {text:"Not at all what I expected very disappointing",label:-1},
@@ -1039,10 +1078,10 @@ class EnsembleNLP {
     this.lr.fit(X_vec, y);
     this.trained = true;
 
-    // 5. Évaluer sur testSet
+    // 5. Évaluer sur testSet (données jamais vues)
     this.metrics = this._evaluate(testSet);
-    console.log(` Train: ${trainSet.length} ex. | Test: ${testSet.length} ex.`);
-    console.log(` Accuracy: ${(this.metrics.accuracy * 100).toFixed(1)}% | F1: ${(this.metrics.macroF1 * 100).toFixed(1)}%`);
+    console.log(`📊 Train: ${trainSet.length} ex. | Test: ${testSet.length} ex.`);
+    console.log(`✅ Accuracy: ${(this.metrics.accuracy * 100).toFixed(1)}% | F1: ${(this.metrics.macroF1 * 100).toFixed(1)}%`);
     return this.metrics;
   }
 

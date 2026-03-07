@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getUser, saveAuth, clearAuth } from "./utils/helpers";
-import AuthPage  from "./components/AuthPage";
+import AuthPage  from "./components/authpage";
 import Dashboard from "./components/Dashboard";
 import "./styles/app.css";
 
