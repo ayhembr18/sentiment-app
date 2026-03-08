@@ -9,9 +9,10 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ error: 'Token manquant — connectez-vous' });
 
   try {
-    const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
-    req.userId  = decoded.userId;
-    req.userNom = decoded.nom;
+    const decoded   = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+    req.userId      = decoded.userId;
+    req.userNom     = decoded.nom;
+    req.userRole    = decoded.role || 'user';
     next();
   } catch {
     return res.status(401).json({ error: 'Token invalide ou expiré' });

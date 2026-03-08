@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { API, authHeaders, parseCSV, sentimentColor } from "../utils/helpers";
-import ReviewCard from "./ReviewCard";
-import BarChart   from "./BarChart";
-import Sparkline  from "./Sparkiline";
+import ReviewCard  from "./ReviewCard";
+import BarChart    from "./BarChart";
+import Sparkline   from "./Sparkiline";
+import AdminPanel  from "./AdminPanel";
+import ScraperTool from "./ScraperTool";
 
 function AnimatedNumber({ value }) {
   const [d, setD] = useState(0);
@@ -18,13 +20,6 @@ function AnimatedNumber({ value }) {
   return <>{d}</>;
 }
 
-const TABS = [
-  { id: "dashboard", label: " Dashboard" },
-  { id: "reviews",   label: " Avis" },
-  { id: "ajouter",   label: " Ajouter" },
-  { id: "import",    label: " Import CSV" },
-];
-
 export default function Dashboard({ user, onLogout }) {
   const [reviews, setReviews]     = useState([]);
   const [loading, setLoading]     = useState(false);
@@ -34,7 +29,19 @@ export default function Dashboard({ user, onLogout }) {
   const [newestId, setNewestId]   = useState(null);
   const [csvDrag, setCsvDrag]     = useState(false);
   const [serverOk, setServerOk]   = useState(null);
+  const [pendingFlags, setPendingFlags] = useState(0);
   const fileRef = useRef();
+
+  const isAdmin = user?.role === "admin";
+
+  const TABS = [
+    { id: "dashboard", label: " Dashboard" },
+    { id: "reviews",   label: " Avis" },
+    { id: "ajouter",   label: " Ajouter" },
+    { id: "import",    label: " Import CSV" },
+    { id: "scraper",   label: " Scraper" },
+    ...(isAdmin ? [{ id: "admin", label: ` Admin${pendingFlags > 0 ? ` (${pendingFlags})` : ""}` }] : []),
+  ];
 
   const fetchReviews = async () => {
     try {
@@ -45,7 +52,26 @@ export default function Dashboard({ user, onLogout }) {
     } catch { setServerOk(false); }
   };
 
-  useEffect(() => { fetchReviews(); }, []);
+  const fetchPendingFlags = async () => {
+    if (!isAdmin) return;
+    try {
+      const res  = await fetch(`${API}/flags/stats`, { headers: authHeaders() });
+      const data = await res.json();
+      setPendingFlags(data.pending || 0);
+    } catch { /* silencieux */ }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+    fetchPendingFlags();
+  }, []);
+
+  // Rafraîchit le badge admin toutes les 30s
+  useEffect(() => {
+    if (!isAdmin) return;
+    const id = setInterval(fetchPendingFlags, 30000);
+    return () => clearInterval(id);
+  }, [isAdmin]);
 
   const handleSubmit = async () => {
     if (!form.text.trim()) return;
@@ -76,7 +102,6 @@ export default function Dashboard({ user, onLogout }) {
           method: "POST", headers: authHeaders(),
           body: JSON.stringify({ text: row.text, auteur: row.auteur || "Anonyme", etoiles: row.etoiles || 3 }),
         });
-        await fetchReviews();
       } catch (e) { console.error(e); }
     }
     await fetchReviews();
@@ -105,8 +130,12 @@ export default function Dashboard({ user, onLogout }) {
         </div>
         <div className="header-right">
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#e0e0e0" }}> {user.nom}</div>
-            {user.boutique && <div style={{ fontSize: 10, color: "#555" }}> {user.boutique}</div>}
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#e0e0e0" }}>
+              {isAdmin && <span style={{ color: "#ffd166", marginRight: 4 }}>🛡️</span>}
+              {user.nom}
+            </div>
+            {user.boutique && <div style={{ fontSize: 10, color: "#555" }}>🏪 {user.boutique}</div>}
+            {isAdmin && <div style={{ fontSize: 10, color: "#ffd166" }}>Administrateur</div>}
           </div>
           <span className={`badge ${serverOk ? "badge-success" : "badge-error"}`}>
             {serverOk ? "● Connecté" : "● Hors ligne"}
@@ -119,7 +148,8 @@ export default function Dashboard({ user, onLogout }) {
       <div className="tabs">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
-            className={`tab-btn ${activeTab === t.id ? "active" : "inactive"}`}>
+            className={`tab-btn ${activeTab === t.id ? "active" : "inactive"}`}
+            style={t.id === "admin" && pendingFlags > 0 ? { color: "#ffd166" } : {}}>
             {t.label}
           </button>
         ))}
@@ -128,16 +158,14 @@ export default function Dashboard({ user, onLogout }) {
       {/* CONTENU */}
       <div className="content">
 
-        {/* DASHBOARD */}
+        {/* ── DASHBOARD ────────────────────────────────────────── */}
         {activeTab === "dashboard" && (
           <div className="fade-up">
-            {/* Salutation */}
             <div style={{ marginBottom: 20, padding: "14px 18px", background: "rgba(0,229,160,0.05)", border: "1px solid #00e5a022", borderRadius: 12 }}>
-              <span style={{ fontSize: 14, color: "#00e5a0", fontWeight: 600 }}> Bonjour {user.nom} !</span>
+              <span style={{ fontSize: 14, color: "#00e5a0", fontWeight: 600 }}>👋 Bonjour {user.nom} !</span>
               <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>Voici l'analyse de vos {reviews.length} avis clients.</span>
             </div>
 
-            {/* KPIs */}
             <div className="grid-4" style={{ marginBottom: 20 }}>
               {[
                 { label: "Total Avis",    color: "#0070f3", anim: reviews.length },
@@ -146,7 +174,6 @@ export default function Dashboard({ user, onLogout }) {
                 { label: "À surveiller", color: "#ff4d6d", anim: neg },
               ].map((k, i) => (
                 <div key={i} className="kpi-card" style={{ borderColor: k.color, borderTopColor: k.color }}>
-                  <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
                   <div className="kpi-value" style={{ color: k.color }}>
                     {k.anim !== undefined
                       ? k.pct ? <><AnimatedNumber value={k.anim} />%</> : <AnimatedNumber value={k.anim} />
@@ -157,7 +184,6 @@ export default function Dashboard({ user, onLogout }) {
               ))}
             </div>
 
-            {/* Graphiques */}
             <div className="grid-2" style={{ marginBottom: 20 }}>
               <div className="card">
                 <div className="section-title">Répartition des sentiments</div>
@@ -177,7 +203,6 @@ export default function Dashboard({ user, onLogout }) {
               </div>
             </div>
 
-            {/* Barre satisfaction */}
             <div className="card">
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
                 <span className="section-title" style={{ marginBottom: 0 }}>Indice de satisfaction global</span>
@@ -201,7 +226,7 @@ export default function Dashboard({ user, onLogout }) {
           </div>
         )}
 
-        {/* REVIEWS */}
+        {/* ── REVIEWS ──────────────────────────────────────────── */}
         {activeTab === "reviews" && (
           <div className="fade-up">
             <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
@@ -228,7 +253,7 @@ export default function Dashboard({ user, onLogout }) {
           </div>
         )}
 
-        {/* AJOUTER */}
+        {/* ── AJOUTER ──────────────────────────────────────────── */}
         {activeTab === "ajouter" && (
           <div className="fade-up" style={{ maxWidth: 560 }}>
             <div className="card" style={{ borderRadius: 16, padding: 24 }}>
@@ -239,21 +264,26 @@ export default function Dashboard({ user, onLogout }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
                   <label className="form-label">Auteur</label>
-                  <input className="form-input" value={form.auteur} onChange={e => setForm(p => ({ ...p, auteur: e.target.value }))} placeholder="Nom du client..." />
+                  <input className="form-input" value={form.auteur}
+                    onChange={e => setForm(p => ({ ...p, auteur: e.target.value }))}
+                    placeholder="Nom du client..." />
                 </div>
                 <div>
                   <label className="form-label">Note ({form.etoiles} ★)</label>
                   <div style={{ display: "flex", gap: 8 }}>
                     {[1,2,3,4,5].map(n => (
                       <button key={n} onClick={() => setForm(p => ({ ...p, etoiles: n }))}
-                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24, color: n <= form.etoiles ? "#ffd166" : "#333", padding: 0 }}>★</button>
+                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24,
+                          color: n <= form.etoiles ? "#ffd166" : "#333", padding: 0 }}>★</button>
                     ))}
                   </div>
                 </div>
                 <div>
                   <label className="form-label">Texte de l'avis *</label>
-                  <textarea className="form-input" value={form.text} onChange={e => setForm(p => ({ ...p, text: e.target.value }))}
-                    placeholder="Saisissez l'avis ici... (FR ou EN)" rows={4} style={{ resize: "vertical" }} />
+                  <textarea className="form-input" value={form.text}
+                    onChange={e => setForm(p => ({ ...p, text: e.target.value }))}
+                    placeholder="Saisissez l'avis ici... (FR ou EN)" rows={4}
+                    style={{ resize: "vertical" }} />
                 </div>
                 <button onClick={handleSubmit} disabled={loading || !form.text.trim()} className="btn-primary">
                   {loading ? <><div className="spinner" />Analyse NLP...</> : " Analyser & Enregistrer"}
@@ -263,7 +293,7 @@ export default function Dashboard({ user, onLogout }) {
           </div>
         )}
 
-        {/* IMPORT CSV */}
+        {/* ── IMPORT CSV ───────────────────────────────────────── */}
         {activeTab === "import" && (
           <div className="fade-up" style={{ maxWidth: 560 }}>
             <div
@@ -289,6 +319,23 @@ export default function Dashboard({ user, onLogout }) {
                 Colonnes: text/avis/comment · auteur/author/nom · etoiles/stars/note
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── SCRAPER ──────────────────────────────────────────── */}
+        {activeTab === "scraper" && (
+          <div className="fade-up">
+            <ScraperTool onImport={() => { fetchReviews(); setActiveTab("reviews"); }} />
+          </div>
+        )}
+
+        {/* ── ADMIN ────────────────────────────────────────────── */}
+        {activeTab === "admin" && isAdmin && <AdminPanel />}
+
+        {/* Accès refusé si non-admin essaie d'accéder à /admin */}
+        {activeTab === "admin" && !isAdmin && (
+          <div style={{ textAlign: "center", color: "#ff4d6d", padding: 60 }}>
+             Accès réservé aux administrateurs
           </div>
         )}
       </div>

@@ -1,22 +1,10 @@
-// ══════════════════════════════════════════════════════════════
-//  SentiMind NLP — Modèle from scratch
-//  Dataset : 1000+ exemples · Lexique enrichi · FR + EN
-// ══════════════════════════════════════════════════════════════
-
-// ── STOPWORDS ─────────────────────────────────────────────────
-// On garde les mots de liaison importants pour le sentiment :
-// "mais", "pourtant", "cependant", "toutefois", "but", "however",
-// "although", "though", "yet", "despite", "malgré", "quand même"
-// Ces mots introduisent souvent un retournement de sentiment !
-
 const STOPWORDS_FR = new Set([
   "le","la","les","un","une","des","du","de","et","en","au","aux","à","ce","se","sa","son","ses",
   "mon","ma","mes","ton","ta","tes","je","tu","il","elle","nous","vous","ils","elles","que","qui",
   "quoi","dans","sur","sous","par","pour","avec","ne",
   "tout","tous","cette","cet","ces","ça","c","j","l","d","s","m",
   "n","y","là","où","dont","lorsque","quand","comment","pourquoi","est","sont","était","être",
-  // EXCLUS VOLONTAIREMENT (importants pour le sentiment) :
-  // "mais","ou","si","plus","bien","aussi","même","ni","car","sans"
+
 ]);
 
 const STOPWORDS_EN = new Set([
@@ -25,8 +13,7 @@ const STOPWORDS_EN = new Set([
   "it","its","this","that","i","you","he","she","we","they","me","him","her","us","them","my",
   "your","his","our","their","what","which","who","when","where","why","how",
   "am","im","ive","as","if","then","there","here","up","out","about","than","too",
-  // EXCLUS VOLONTAIREMENT (importants pour le sentiment) :
-  // "but","yet","however","although","though","despite","or","so","just","also","even","still"
+  
 ]);
 
 const NEGATIONS = new Set([
@@ -1080,8 +1067,8 @@ class EnsembleNLP {
 
     // 5. Évaluer sur testSet (données jamais vues)
     this.metrics = this._evaluate(testSet);
-    console.log(`📊 Train: ${trainSet.length} ex. | Test: ${testSet.length} ex.`);
-    console.log(`✅ Accuracy: ${(this.metrics.accuracy * 100).toFixed(1)}% | F1: ${(this.metrics.macroF1 * 100).toFixed(1)}%`);
+    console.log(` Train: ${trainSet.length} ex. | Test: ${testSet.length} ex.`);
+    console.log(` Accuracy: ${(this.metrics.accuracy * 100).toFixed(1)}% | F1: ${(this.metrics.macroF1 * 100).toFixed(1)}%`);
     return this.metrics;
   }
 
@@ -1191,6 +1178,37 @@ function detectLang(text) {
   const lower   = text.toLowerCase();
   return frWords.filter(w => lower.split(" ").includes(w)).length >= 2 ? "FR" : "EN";
 }
+
+// ── CHARGEMENT DES EXEMPLES VALIDÉS PAR L'ADMIN ───────────────
+(function loadExtraData() {
+  const fs   = require('fs');
+  const path = require('path');
+  const dataPath = path.join(__dirname, 'extra_data.json');
+  try {
+    const raw = fs.readFileSync(dataPath, 'utf8');
+    const examples = JSON.parse(raw);
+    if (Array.isArray(examples) && examples.length > 0) {
+      // ── Vérification doublons par flagId ──────────────────
+      const existingTexts = new Set(TRAINING_DATA.map(d => d.text.trim().toLowerCase()));
+      let added = 0;
+      examples.forEach(ex => {
+        if (ex.text && ex.label !== undefined) {
+          const key = ex.text.trim().toLowerCase();
+          if (!existingTexts.has(key)) {
+            TRAINING_DATA.push({ text: ex.text, label: Number(ex.label) });
+            existingTexts.add(key);
+            added++;
+          }
+        }
+      });
+      if (added > 0)
+        console.log(` extra_data.json : ${added} exemple(s) validé(s) ajouté(s) au dataset`);
+      else
+        console.log(` extra_data.json : 0 nouveaux exemples (${examples.length} déjà présents)`);
+    }
+  } catch {
+  }
+})();
 
 // ── EXPORT ─────────────────────────────────────────────────────
 const model = new EnsembleNLP();

@@ -1,0 +1,30 @@
+[
+  {
+    "text": "Produit livré rapidement et bien emballé c est vrai mais honnêtement la qualité ne correspond pas du tout au prix demandé. Pour ce tarif on est en droit d attendre quelque chose de plus robuste et mieux fini. Quelques utilisations suffisent pour constater que c est du matériel bon marché déguisé en produit premium.",
+    "label": -1,
+    "source": "human_validated",
+    "flagId": "69ad4e6e1adba4b6231319b0",
+    "date": "2026-03-08T10:29:37.612Z"
+  },
+  {
+    "text": "I ordered this as a gift and was extremely nervous it would not arrive in time given some of the delivery complaints I had read. However it arrived two days early",
+    "label": 1,
+    "source": "human_validated",
+    "flagId": "69ad4e361adba4b6231319ac",
+    "date": "2026-03-08T10:29:39.132Z"
+  },
+  {
+    "text": "Ce produit a vraiment changé ma routine quotidienne. Qualité exceptionnelle finitions impeccables et un rapport qualité prix que je n avais jamais vu dans cette catégorie. J ai hésité longtemps avant d acheter mais je regrette seulement de ne pas l avoir fait plus tôt. Service client réactif et professionnel en tout point.",
+    "label": 1,
+    "source": "human_validated",
+    "flagId": "69ad4e0f1adba4b6231319a8",
+    "date": "2026-03-08T10:29:40.777Z"
+  },
+  {
+    "text": "I ordered this item expecting great things based on the glowing reviews but I have to be completely honest and say that the reality was a major disappointment. The build quality feels cheap and flimsy",
+    "label": -1,
+    "source": "human_validated",
+    "flagId": "69ad4dd61adba4b6231319a4",
+    "date": "2026-03-08T10:29:43.017Z"
+  }
+]
