@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { API, authHeaders, parseCSV, sentimentColor } from "../utils/helpers";
+import { exportPDF } from "../utils/exportPDF";
 import ReviewCard  from "./ReviewCard";
 import BarChart    from "./BarChart";
 import Sparkline   from "./Sparkiline";
 import AdminPanel  from "./AdminPanel";
-import ScraperTool from "./ScraperTool";
+import ScraperTool   from "./ScraperTool";
+import InsightsPanel from "./Insightspanel";
 
 function AnimatedNumber({ value }) {
   const [d, setD] = useState(0);
@@ -30,6 +32,8 @@ export default function Dashboard({ user, onLogout }) {
   const [csvDrag, setCsvDrag]     = useState(false);
   const [serverOk, setServerOk]   = useState(null);
   const [pendingFlags, setPendingFlags] = useState(0);
+  const [insights, setInsights]       = useState(null);
+  const [pdfLoading, setPdfLoading]   = useState(false);
   const fileRef = useRef();
 
   const isAdmin = user?.role === "admin";
@@ -37,10 +41,11 @@ export default function Dashboard({ user, onLogout }) {
   const TABS = [
     { id: "dashboard", label: " Dashboard" },
     { id: "reviews",   label: " Avis" },
-    { id: "ajouter",   label: " Ajouter" },
+    { id: "ajouter",   label: "️ Ajouter" },
     { id: "import",    label: " Import CSV" },
     { id: "scraper",   label: " Scraper" },
-    ...(isAdmin ? [{ id: "admin", label: ` Admin${pendingFlags > 0 ? ` (${pendingFlags})` : ""}` }] : []),
+    { id: "insights",  label: " Insights" },
+    ...(isAdmin ? [{ id: "admin", label: `️ Admin${pendingFlags > 0 ? ` (${pendingFlags})` : ""}` }] : []),
   ];
 
   const fetchReviews = async () => {
@@ -122,7 +127,7 @@ export default function Dashboard({ user, onLogout }) {
       {/* HEADER */}
       <div className="header">
         <div className="header-logo">
-          <div className="logo-icon">🧠</div>
+          <div className="logo-icon"></div>
           <div>
             <div className="logo-title">SentiMind <span>NLP</span></div>
             <div className="logo-sub">Modèle maison · FR + EN · MERN</div>
@@ -131,16 +136,32 @@ export default function Dashboard({ user, onLogout }) {
         <div className="header-right">
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#e0e0e0" }}>
-              {isAdmin && <span style={{ color: "#ffd166", marginRight: 4 }}>🛡️</span>}
+              {isAdmin && <span style={{ color: "#ffd166", marginRight: 4 }}>️</span>}
               {user.nom}
             </div>
-            {user.boutique && <div style={{ fontSize: 10, color: "#555" }}>🏪 {user.boutique}</div>}
+            {user.boutique && <div style={{ fontSize: 10, color: "#555" }}> {user.boutique}</div>}
             {isAdmin && <div style={{ fontSize: 10, color: "#ffd166" }}>Administrateur</div>}
           </div>
           <span className={`badge ${serverOk ? "badge-success" : "badge-error"}`}>
-            {serverOk ? "● Connecté" : "● Hors ligne"}
+            {serverOk ? "● Connecté" : "Hors ligne"}
           </span>
-          <button onClick={onLogout} className="btn-logout">Déconnexion</button>
+          <button
+            onClick={async () => {
+              setPdfLoading(true);
+              try { await exportPDF({ user, reviews, insights }); }
+              catch(e) { alert("Erreur PDF: " + e.message); }
+              setPdfLoading(false);
+            }}
+            disabled={pdfLoading || reviews.length === 0}
+            style={{
+              background: "linear-gradient(135deg,#a78bfa,#0070f3)",
+              border: "none", borderRadius: 8, padding: "6px 14px",
+              fontSize: 12, cursor: reviews.length > 0 ? "pointer" : "not-allowed",
+              color: "#fff", fontWeight: 700, opacity: reviews.length === 0 ? 0.4 : 1,
+            }}>
+            {pdfLoading ? "Chargement..." : " Export PDF"}
+          </button>
+          <button onClick={onLogout} className="btn-logout">Deconnexion</button>
         </div>
       </div>
 
@@ -162,7 +183,7 @@ export default function Dashboard({ user, onLogout }) {
         {activeTab === "dashboard" && (
           <div className="fade-up">
             <div style={{ marginBottom: 20, padding: "14px 18px", background: "rgba(0,229,160,0.05)", border: "1px solid #00e5a022", borderRadius: 12 }}>
-              <span style={{ fontSize: 14, color: "#00e5a0", fontWeight: 600 }}>👋 Bonjour {user.nom} !</span>
+              <span style={{ fontSize: 14, color: "#00e5a0", fontWeight: 600 }}> Bonjour {user.nom} !</span>
               <span style={{ fontSize: 13, color: "#555", marginLeft: 8 }}>Voici l'analyse de vos {reviews.length} avis clients.</span>
             </div>
 
@@ -218,9 +239,9 @@ export default function Dashboard({ user, onLogout }) {
                 }} />
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: "#444" }}>
-                <span>🔴 {neg} négatifs</span>
-                <span>🟡 {neu} neutres</span>
-                <span>🟢 {pos} positifs</span>
+                <span> {neg} négatifs</span>
+                <span> {neu} neutres</span>
+                <span> {pos} positifs</span>
               </div>
             </div>
           </div>
@@ -269,12 +290,12 @@ export default function Dashboard({ user, onLogout }) {
                     placeholder="Nom du client..." />
                 </div>
                 <div>
-                  <label className="form-label">Note ({form.etoiles} ★)</label>
+                  <label className="form-label">Note ({form.etoiles} )</label>
                   <div style={{ display: "flex", gap: 8 }}>
                     {[1,2,3,4,5].map(n => (
                       <button key={n} onClick={() => setForm(p => ({ ...p, etoiles: n }))}
                         style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24,
-                          color: n <= form.etoiles ? "#ffd166" : "#333", padding: 0 }}>★</button>
+                          color: n <= form.etoiles ? "#ffd166" : "#333", padding: 0 }}></button>
                     ))}
                   </div>
                 </div>
@@ -304,7 +325,7 @@ export default function Dashboard({ user, onLogout }) {
               onClick={() => fileRef.current?.click()}
               style={{ border: `2px dashed ${csvDrag ? "#00e5a0" : "#333"}`, background: csvDrag ? "#00e5a011" : "rgba(255,255,255,0.02)" }}
             >
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
+              <div style={{ fontSize: 40, marginBottom: 12 }}></div>
               <div style={{ fontWeight: 600, marginBottom: 6 }}>Glissez un fichier CSV ici</div>
               <div style={{ fontSize: 12, color: "#555" }}>ou cliquez pour sélectionner</div>
               <input ref={fileRef} type="file" accept=".csv" style={{ display: "none" }}
@@ -326,6 +347,13 @@ export default function Dashboard({ user, onLogout }) {
         {activeTab === "scraper" && (
           <div className="fade-up">
             <ScraperTool onImport={() => { fetchReviews(); setActiveTab("reviews"); }} />
+          </div>
+        )}
+
+        {/* ── INSIGHTS ─────────────────────────────────────────── */}
+        {activeTab === "insights" && (
+          <div className="fade-up">
+            <InsightsPanel reviewCount={reviews.length} onInsightsReady={setInsights} />
           </div>
         )}
 

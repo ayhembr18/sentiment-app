@@ -3,10 +3,11 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-const authRoutes   = require('./routes/auth');
-const reviewRoutes = require('./routes/reviews');
-const flagRoutes   = require('./routes/flags');
-const scrapeRoutes = require('./routes/scrape');
+const authRoutes     = require('./routes/auth');
+const reviewRoutes   = require('./routes/reviews');
+const flagRoutes     = require('./routes/flags');
+const scrapeRoutes   = require('./routes/scrape');
+const insightsRoutes = require('./routes/insights');
 
 const app = express();
 app.use(cors());
@@ -18,10 +19,11 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/sentimentdb
   .catch(err => console.error(' MongoDB erreur:', err));
 
 // ── Routes ─────────────────────────────────────────────────────
-app.use('/api/auth',    authRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/flags',   flagRoutes);
-app.use('/api/scrape',  scrapeRoutes);
+app.use('/api/auth',     authRoutes);
+app.use('/api/reviews',  reviewRoutes);
+app.use('/api/flags',    flagRoutes);
+app.use('/api/scrape',   scrapeRoutes);
+app.use('/api/insights', insightsRoutes);
 
 // ── Démarrage ──────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
